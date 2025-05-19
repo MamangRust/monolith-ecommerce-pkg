@@ -4,6 +4,7 @@ go 1.23.4
 
 require (
 	github.com/IBM/sarama v1.45.1
+	github.com/MamangRust/monolith-ecommerce-shared v1.0.3
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
 	github.com/gosimple/slug v1.15.0
@@ -19,7 +20,6 @@ require (
 )
 
 require (
-	github.com/MamangRust/monolith-ecommerce-shared v1.0.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/eapache/go-resiliency v1.7.0 // indirect
