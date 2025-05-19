@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/IBM/sarama"
-	"github.com/MamangRust/monolith-ecommerce-grpc-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 )
 
 type Kafka struct {

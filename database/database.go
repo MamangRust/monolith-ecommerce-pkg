@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/MamangRust/monolith-ecommerce-grpc-pkg/logger"
+	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"

@@ -3,9 +3,9 @@ package seeder
 import (
 	"context"
 
-	db "github.com/MamangRust/monolith-ecommerce-grpc-pkg/database/schema"
-	"github.com/MamangRust/monolith-ecommerce-grpc-pkg/hash"
-	"github.com/MamangRust/monolith-ecommerce-grpc-pkg/logger"
+	db "github.com/MamangRust/monolith-ecommerce-pkg/database/schema"
+	"github.com/MamangRust/monolith-ecommerce-pkg/hash"
+	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
 
 	"fmt"
 
