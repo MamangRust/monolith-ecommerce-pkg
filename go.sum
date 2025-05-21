@@ -1,7 +1,7 @@
 github.com/IBM/sarama v1.45.1 h1:nY30XqYpqyXOXSNoe2XCgjj9jklGM1Ye94ierUb1jQ0=
 github.com/IBM/sarama v1.45.1/go.mod h1:qifDhA3VWSrQ1TjSMyxDl3nYL3oX2C83u+G6L79sq4w=
-github.com/MamangRust/monolith-ecommerce-shared v1.0.3 h1:LKibm8QYxGPEKGStUPWlbZSDh5oAzPwY2yCIkHwStBw=
-github.com/MamangRust/monolith-ecommerce-shared v1.0.3/go.mod h1:heaTflcv5FVq09g52B9jMW4DL/B9nTOH9bvquZYhPGs=
+github.com/MamangRust/monolith-ecommerce-shared v1.0.5 h1:0bJYn9vDSjHyEVnEbI4OIccwsw70LBqlrOZXXUX64QA=
+github.com/MamangRust/monolith-ecommerce-shared v1.0.5/go.mod h1:qQEHIzntOtvhw+wXBreNmHD82ommlL+7SmqWk8/lky4=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
 github.com/cenkalti/backoff/v4 v4.3.0/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

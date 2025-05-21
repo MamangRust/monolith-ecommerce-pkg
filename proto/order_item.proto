@@ -81,5 +81,4 @@ service OrderItemService {
     rpc FindAll(FindAllOrderItemRequest) returns (ApiResponsePaginationOrderItem);
     rpc FindByActive(FindAllOrderItemRequest) returns (ApiResponsePaginationOrderItemDeleteAt);
     rpc FindByTrashed(FindAllOrderItemRequest) returns (ApiResponsePaginationOrderItemDeleteAt);
-    rpc FindOrderItemByOrder(FindByIdOrderItemRequest) returns (ApiResponsesOrderItem);
 }

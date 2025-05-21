@@ -231,9 +231,6 @@ service OrderService{
     rpc FindMonthlyTotalRevenue(FindYearMonthTotalRevenue) returns (ApiResponseOrderMonthlyTotalRevenue){}
     rpc FindYearlyTotalRevenue(FindYearTotalRevenue) returns (ApiResponseOrderYearlyTotalRevenue){}
 
-    rpc FindMonthlyTotalRevenueById(FindYearMonthTotalRevenueById) returns (ApiResponseOrderMonthlyTotalRevenue){}
-    rpc FindYearlyTotalRevenueById(FindYearTotalRevenueById) returns (ApiResponseOrderYearlyTotalRevenue){}
-
     rpc FindMonthlyTotalRevenueByMerchant(FindYearMonthTotalRevenueByMerchant) returns (ApiResponseOrderMonthlyTotalRevenue){}
     rpc FindYearlyTotalRevenueByMerchant(FindYearTotalRevenueByMerchant) returns (ApiResponseOrderYearlyTotalRevenue){}
 
