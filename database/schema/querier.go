@@ -2844,6 +2844,7 @@ type Querier interface {
 	//   - Automatically updates updated_at timestamps
 	//   - Only affects non-deleted records
 	UpdateMerchantSocialMediaLink(ctx context.Context, arg UpdateMerchantSocialMediaLinkParams) (*MerchantSocialMediaLink, error)
+	UpdateMerchantStatus(ctx context.Context, arg UpdateMerchantStatusParams) (*Merchant, error)
 	// UpdateOrder: Modifies order information
 	// Purpose: Update order details (primarily total price)
 	// Parameters:

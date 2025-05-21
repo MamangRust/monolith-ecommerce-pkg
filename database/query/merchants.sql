@@ -137,7 +137,7 @@ WHERE merchant_id = $1
   RETURNING *;
 
 
--- name: UpdateMerchantStatus: one
+-- name: UpdateMerchantStatus :one
 UPDATE merchants
 SET status = $2,
     updated_at = CURRENT_TIMESTAMP
