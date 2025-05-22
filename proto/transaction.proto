@@ -63,6 +63,7 @@ message CreateTransactionRequest {
     int32 merchant_id = 2;
     string payment_method = 3;
     int32 amount = 4;
+    int32 user_id = 5;
 }
 
 message UpdateTransactionRequest {
