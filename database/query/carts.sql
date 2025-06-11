@@ -52,29 +52,31 @@ VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
 
 
--- DeleteCart: Removes a single item from user's cart
--- Purpose: Remove unwanted items during checkout process
+-- DeleteCartByIdAndUserId: Deletes a cart item for a specific user
+-- Purpose: Ensure only the owner can delete their cart item
 -- Parameters:
---   $1: cart_id - ID of the specific cart item to remove
+--   $1: cart_id - ID of the cart item to delete
+--   $2: user_id - ID of the user owning the cart
 -- Returns:
 --   Nothing (exec-only)
 -- Business Logic:
---   - Permanently deletes the specified cart item
---   - Used for individual item removal
---   - No return value needed (UI refreshes cart after operation)
--- name: DeleteCart :exec
-DELETE FROM "carts" WHERE "cart_id" = $1;
+--   - Prevents deletion of other users' cart items
+--   - Used during individual item removal
+-- name: DeleteCartByIdAndUserId :exec
+DELETE FROM "carts" WHERE "cart_id" = $1 AND "user_id" = $2;
 
 
--- DeleteAllCart: Batch removes multiple cart items
--- Purpose: Clear selected items or reset cart
+
+
+-- DeleteAllCartByUserId: Deletes multiple cart items for a specific user
+-- Purpose: Delete selected cart items securely
 -- Parameters:
---   $1: cart_ids - Array of cart item IDs to remove
+--   $1: cart_ids - Array of cart item IDs
+--   $2: user_id  - ID of the user
 -- Returns:
 --   Nothing (exec-only)
 -- Business Logic:
---   - Efficiently deletes multiple items in single operation
---   - Uses array parameter for batch processing
---   - Typically used for "Clear Cart" functionality
--- name: DeleteAllCart :exec
-DELETE FROM "carts" WHERE "cart_id" = ANY($1::int[]);
+--   - Ensures only the user’s own cart items are deleted
+-- name: DeleteAllCartByUserId :exec
+DELETE FROM "carts"
+WHERE "cart_id" = ANY($1::int[]) AND "user_id" = $2;
