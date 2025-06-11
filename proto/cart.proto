@@ -25,8 +25,14 @@ message FindByIdCartRequest {
     int32 id = 1;
 }
 
+message DeleteAllCartRequest {
+  int32 user_id = 1;
+  repeated int32 cart_ids = 2;
+}
+
 message DeleteCartRequest {
-    repeated int32 cart_ids = 1;
+  int32 cart_id = 1;
+  int32 user_id = 2;
 }
 
 
@@ -89,6 +95,6 @@ message ApiResponsePaginationCart {
 service CartService{
     rpc FindAll(FindAllCartRequest) returns(ApiResponsePaginationCart);
     rpc Create(CreateCartRequest) returns(ApiResponseCart);
-    rpc Delete(FindByIdCartRequest) returns(ApiResponseCartDelete);
-    rpc DeleteAll(DeleteCartRequest) returns(ApiResponseCartAll);
+    rpc Delete(DeleteCartRequest) returns(ApiResponseCartDelete);
+    rpc DeleteAll(DeleteAllCartRequest) returns(ApiResponseCartAll);
 }
