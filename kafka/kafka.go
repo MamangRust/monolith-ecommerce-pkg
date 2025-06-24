@@ -2,10 +2,10 @@ package kafka
 
 import (
 	"context"
-	"log"
 
 	"github.com/IBM/sarama"
 	"github.com/MamangRust/monolith-ecommerce-pkg/logger"
+	"go.uber.org/zap"
 )
 
 type Kafka struct {
@@ -22,10 +22,10 @@ func NewKafka(logger logger.LoggerInterface, brokers []string) *Kafka {
 
 	producer, err := sarama.NewSyncProducer(brokers, config)
 	if err != nil {
-		log.Fatalf("Failed to create Kafka producer: %v", err)
+		logger.Fatal("Failed to create Kafka producer", zap.Error(err))
 	}
 
-	log.Println("Kafka producer connected successfully")
+	logger.Info("Kafka producer connected successfully")
 
 	return &Kafka{
 		producer: producer,
@@ -46,12 +46,15 @@ func (k *Kafka) SendMessage(topic string, key string, value []byte) error {
 		return err
 	}
 
-	log.Printf("Message is stored in topic(%s)/partition(%d)/offset(%d)\n", topic, partition, offset)
+	k.logger.Info("Message is stored in topic", zap.String("topic", topic), zap.Int32("partition", partition), zap.Int64("offset", offset))
+
 	return nil
 }
 
 func (k *Kafka) StartConsumers(topics []string, groupID string, handler sarama.ConsumerGroupHandler) error {
 	config := sarama.NewConfig()
+	config.Consumer.Return.Errors = true
+	config.Consumer.Offsets.Initial = sarama.OffsetNewest
 
 	consumerGroup, err := sarama.NewConsumerGroup(k.brokers, groupID, config)
 	if err != nil {
@@ -63,14 +66,14 @@ func (k *Kafka) StartConsumers(topics []string, groupID string, handler sarama.C
 	go func() {
 		for {
 			if err := consumerGroup.Consume(ctx, topics, handler); err != nil {
-				log.Printf("Error from consumer: %v", err)
+				k.logger.Error("Error from consumer", zap.Error(err))
 			}
 		}
 	}()
 
 	go func() {
 		for err := range consumerGroup.Errors() {
-			log.Printf("Consumer group error: %v", err)
+			k.logger.Error("Consumer group error", zap.Error(err))
 		}
 	}()
 
