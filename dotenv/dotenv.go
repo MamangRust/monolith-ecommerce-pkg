@@ -21,7 +21,7 @@ func Viper() error {
 		configFile = "/app/docker.env"
 	case "production":
 		configFile = "/app/production.env"
-	case "kubernetes":
+	case "kubernetes", "test":
 		useConfigFile = false
 	default:
 		configFile = ".env"
