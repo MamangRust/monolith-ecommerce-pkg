@@ -20,7 +20,7 @@ import (
 
 type ImageUploads interface {
 	EnsureUploadDirectory(uploadDir string) error
-	ProcessImageUpload(c echo.Context, file *multipart.FileHeader) (string, error)
+	ProcessImageUpload(c echo.Context, uploadDir string, file *multipart.FileHeader) (string, error)
 	CleanupImageOnFailure(imagePath string)
 	SaveUploadedFile(file *multipart.FileHeader, dst string) error
 }
@@ -29,8 +29,8 @@ type ImageUpload struct {
 	logger logger.LoggerInterface
 }
 
-func NewImageUpload() ImageUploads {
-	return &ImageUpload{}
+func NewImageUpload(logger logger.LoggerInterface) ImageUploads {
+	return &ImageUpload{logger: logger}
 }
 
 func (h *ImageUpload) EnsureUploadDirectory(uploadDir string) error {
@@ -46,7 +46,7 @@ func (h *ImageUpload) EnsureUploadDirectory(uploadDir string) error {
 	return nil
 }
 
-func (h *ImageUpload) ProcessImageUpload(c echo.Context, file *multipart.FileHeader) (string, error) {
+func (h *ImageUpload) ProcessImageUpload(c echo.Context, uploadDir string, file *multipart.FileHeader) (string, error) {
 	allowedTypes := map[string]bool{
 		".jpg":  true,
 		".jpeg": true,
@@ -70,7 +70,6 @@ func (h *ImageUpload) ProcessImageUpload(c echo.Context, file *multipart.FileHea
 		})
 	}
 
-	uploadDir := "uploads/products"
 	if err := h.EnsureUploadDirectory(uploadDir); err != nil {
 		return "", c.JSON(http.StatusInternalServerError, response.ErrorResponse{
 			Status:  "server_error",
