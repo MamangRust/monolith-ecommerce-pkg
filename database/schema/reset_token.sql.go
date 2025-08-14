@@ -11,9 +11,11 @@ import (
 )
 
 const createResetToken = `-- name: CreateResetToken :one
-INSERT INTO reset_tokens (user_id, token, expiry_date)
+INSERT INTO
+    reset_tokens (user_id, token, expiry_date)
 VALUES ($1, $2, $3)
-RETURNING id, user_id, token, expiry_date
+RETURNING
+    id, user_id, token, expiry_date
 `
 
 type CreateResetTokenParams struct {
@@ -35,8 +37,7 @@ func (q *Queries) CreateResetToken(ctx context.Context, arg CreateResetTokenPara
 }
 
 const deleteResetToken = `-- name: DeleteResetToken :exec
-DELETE FROM reset_tokens
-WHERE user_id = $1
+DELETE FROM reset_tokens WHERE user_id = $1
 `
 
 func (q *Queries) DeleteResetToken(ctx context.Context, userID int64) error {
@@ -45,8 +46,7 @@ func (q *Queries) DeleteResetToken(ctx context.Context, userID int64) error {
 }
 
 const getResetToken = `-- name: GetResetToken :one
-SELECT id, user_id, token, expiry_date FROM reset_tokens
-WHERE token = $1
+SELECT id, user_id, token, expiry_date FROM reset_tokens WHERE token = $1
 `
 
 func (q *Queries) GetResetToken(ctx context.Context, token string) (*ResetToken, error) {

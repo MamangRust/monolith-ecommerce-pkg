@@ -11,9 +11,35 @@ import (
 )
 
 const createProduct = `-- name: CreateProduct :one
-INSERT INTO products (merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-RETURNING product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, created_at, updated_at, deleted_at
+INSERT INTO
+    products (
+        merchant_id,
+        category_id,
+        name,
+        description,
+        price,
+        count_in_stock,
+        brand,
+        weight,
+        rating,
+        slug_product,
+        image_product
+    )
+VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9,
+        $10,
+        $11
+    )
+RETURNING
+    product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, created_at, updated_at, deleted_at
 `
 
 type CreateProductParams struct {
@@ -90,9 +116,7 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (*
 }
 
 const deleteAllPermanentProducts = `-- name: DeleteAllPermanentProducts :exec
-DELETE FROM products
-WHERE
-    deleted_at IS NOT NULL
+DELETE FROM products WHERE deleted_at IS NOT NULL
 `
 
 // DeleteAllPermanentProducts: Purges all trashed products
@@ -112,7 +136,10 @@ func (q *Queries) DeleteAllPermanentProducts(ctx context.Context) error {
 }
 
 const deleteProductPermanently = `-- name: DeleteProductPermanently :exec
-DELETE FROM products WHERE product_id = $1 AND deleted_at IS NOT NULL
+DELETE FROM products
+WHERE
+    product_id = $1
+    AND deleted_at IS NOT NULL
 `
 
 // DeleteProductPermanently: Removes a product from database
@@ -137,8 +164,9 @@ func (q *Queries) DeleteProductPermanently(ctx context.Context, productID int32)
 const getProductByID = `-- name: GetProductByID :one
 SELECT product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, created_at, updated_at, deleted_at
 FROM products
-WHERE product_id = $1
-  AND deleted_at IS NULL
+WHERE
+    product_id = $1
+    AND deleted_at IS NULL
 `
 
 // GetProductByID: Retrieves an active product by ID
@@ -218,18 +246,21 @@ func (q *Queries) GetProductByIdTrashed(ctx context.Context, productID int32) (*
 }
 
 const getProducts = `-- name: GetProducts :many
-SELECT
-    product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, created_at, updated_at, deleted_at,
-    COUNT(*) OVER() AS total_count
-FROM products
-WHERE deleted_at IS NULL
-AND ($1::TEXT IS NULL 
-       OR p.name ILIKE '%' || $1 || '%'
-       OR p.description ILIKE '%' || $1 || '%'
-       OR p.brand ILIKE '%' || $1 || '%'
-       OR p.slug_product ILIKE '%' || $1 || '%')
+SELECT product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, created_at, updated_at, deleted_at, COUNT(*) OVER () AS total_count
+FROM products as p
+WHERE
+    deleted_at IS NULL
+    AND (
+        $1::TEXT IS NULL
+        OR p.name ILIKE '%' || $1 || '%'
+        OR p.description ILIKE '%' || $1 || '%'
+        OR p.brand ILIKE '%' || $1 || '%'
+        OR p.slug_product ILIKE '%' || $1 || '%'
+    )
 ORDER BY created_at DESC
-LIMIT $2 OFFSET $3
+LIMIT $2
+OFFSET
+    $3
 `
 
 type GetProductsParams struct {
@@ -315,18 +346,21 @@ func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]*Ge
 }
 
 const getProductsActive = `-- name: GetProductsActive :many
-SELECT
-    product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, created_at, updated_at, deleted_at,
-    COUNT(*) OVER() AS total_count
-FROM products
-WHERE deleted_at IS NULL
-AND ($1::TEXT IS NULL 
-       OR p.name ILIKE '%' || $1 || '%'
-       OR p.description ILIKE '%' || $1 || '%'
-       OR p.brand ILIKE '%' || $1 || '%'
-       OR p.slug_product ILIKE '%' || $1 || '%')
+SELECT product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, created_at, updated_at, deleted_at, COUNT(*) OVER () AS total_count
+FROM products as p
+WHERE
+    deleted_at IS NULL
+    AND (
+        $1::TEXT IS NULL
+        OR p.name ILIKE '%' || $1 || '%'
+        OR p.description ILIKE '%' || $1 || '%'
+        OR p.brand ILIKE '%' || $1 || '%'
+        OR p.slug_product ILIKE '%' || $1 || '%'
+    )
 ORDER BY created_at DESC
-LIMIT $2 OFFSET $3
+LIMIT $2
+OFFSET
+    $3
 `
 
 type GetProductsActiveParams struct {
@@ -412,48 +446,54 @@ func (q *Queries) GetProductsActive(ctx context.Context, arg GetProductsActivePa
 }
 
 const getProductsByCategoryName = `-- name: GetProductsByCategoryName :many
-WITH filtered_products AS (
-    SELECT 
-        p.product_id,
-        p.merchant_id,
-        p.category_id,
-        p.weight,
-        p.rating,
-        p.slug_product,
-        p.name,
-        p.description,
-        p.price,
-        p.count_in_stock,
-        p.brand,
-        p.image_product,
-        p.created_at,  
-        p.updated_at,
-        c.name AS category_name
-    FROM 
-        products p
-    JOIN 
-        categories c ON p.category_id = c.category_id
-    WHERE 
-        p.deleted_at IS NULL
-        AND c.name = $1  
-        AND (
-            $2 IS NULL 
-            OR p.name ILIKE '%' || $2 || '%' 
-            OR p.description ILIKE '%' || $2 || '%'
-        )
-        AND (
-            ($3 IS NULL OR p.price >= $3)
-            AND ($4 IS NULL OR p.price <= $4)
-        )
-)
-SELECT 
-    (SELECT COUNT(*) FROM filtered_products) AS total_count,
-    fp.product_id, fp.merchant_id, fp.category_id, fp.weight, fp.rating, fp.slug_product, fp.name, fp.description, fp.price, fp.count_in_stock, fp.brand, fp.image_product, fp.created_at, fp.updated_at, fp.category_name
-FROM 
-    filtered_products fp
-ORDER BY 
-    fp.created_at DESC
-LIMIT $5 OFFSET $6
+WITH
+    filtered_products AS (
+        SELECT
+            p.product_id,
+            p.merchant_id,
+            p.category_id,
+            p.weight,
+            p.rating,
+            p.slug_product,
+            p.name,
+            p.description,
+            p.price,
+            p.count_in_stock,
+            p.brand,
+            p.image_product,
+            p.created_at,
+            p.updated_at,
+            c.name AS category_name
+        FROM products p
+            JOIN categories c ON p.category_id = c.category_id
+        WHERE
+            p.deleted_at IS NULL
+            AND c.name = $1
+            AND (
+                $2 IS NULL
+                OR p.name ILIKE '%' || $2 || '%'
+                OR p.description ILIKE '%' || $2 || '%'
+            )
+            AND (
+                (
+                    $3 IS NULL
+                    OR p.price >= $3
+                )
+                AND (
+                    $4 IS NULL
+                    OR p.price <= $4
+                )
+            )
+    )
+SELECT (
+        SELECT COUNT(*)
+        FROM filtered_products
+    ) AS total_count, fp.product_id, fp.merchant_id, fp.category_id, fp.weight, fp.rating, fp.slug_product, fp.name, fp.description, fp.price, fp.count_in_stock, fp.brand, fp.image_product, fp.created_at, fp.updated_at, fp.category_name
+FROM filtered_products fp
+ORDER BY fp.created_at DESC
+LIMIT $5
+OFFSET
+    $6
 `
 
 type GetProductsByCategoryNameParams struct {
@@ -554,52 +594,52 @@ func (q *Queries) GetProductsByCategoryName(ctx context.Context, arg GetProducts
 }
 
 const getProductsByMerchant = `-- name: GetProductsByMerchant :many
-WITH filtered_products AS (
-    SELECT 
-        p.product_id,
-        p.merchant_id,
-        p.category_id,
-        p.weight,
-        p.rating,
-        p.slug_product,
-        p.name,
-        p.description,
-        p.price,
-        p.count_in_stock,
-        p.brand,
-        p.image_product,
-        p.created_at,  
-        p.updated_at,
-        c.name AS category_name
-    FROM 
-        products p
-    JOIN 
-        categories c ON p.category_id = c.category_id
-    WHERE 
-        p.deleted_at IS NULL
-        AND p.merchant_id = $1  
-        AND (
-            p.name ILIKE '%' || COALESCE($2, '') || '%' 
-            OR p.description ILIKE '%' || COALESCE($2, '') || '%'
-            OR $2 IS NULL
-        )
-        AND (
-            c.category_id = NULLIF($3, 0) 
-            OR NULLIF($3, 0) IS NULL
-        )
-        AND (
-            p.price >= COALESCE(NULLIF($4, 0), 0)
-            AND p.price <= COALESCE(NULLIF($5, 0), 999999999)
-        )
-)
-SELECT 
-    (SELECT COUNT(*) FROM filtered_products) AS total_count,
-    fp.product_id, fp.merchant_id, fp.category_id, fp.weight, fp.rating, fp.slug_product, fp.name, fp.description, fp.price, fp.count_in_stock, fp.brand, fp.image_product, fp.created_at, fp.updated_at, fp.category_name
-FROM 
-    filtered_products fp
-ORDER BY 
-    fp.created_at DESC
-LIMIT $6 OFFSET $7
+WITH
+    filtered_products AS (
+        SELECT
+            p.product_id,
+            p.merchant_id,
+            p.category_id,
+            p.weight,
+            p.rating,
+            p.slug_product,
+            p.name,
+            p.description,
+            p.price,
+            p.count_in_stock,
+            p.brand,
+            p.image_product,
+            p.created_at,
+            p.updated_at,
+            c.name AS category_name
+        FROM products p
+            JOIN categories c ON p.category_id = c.category_id
+        WHERE
+            p.deleted_at IS NULL
+            AND p.merchant_id = $1
+            AND (
+                p.name ILIKE '%' || COALESCE($2, '') || '%'
+                OR p.description ILIKE '%' || COALESCE($2, '') || '%'
+                OR $2 IS NULL
+            )
+            AND (
+                c.category_id = NULLIF($3, 0)
+                OR NULLIF($3, 0) IS NULL
+            )
+            AND (
+                p.price >= COALESCE(NULLIF($4, 0), 0)
+                AND p.price <= COALESCE(NULLIF($5, 0), 999999999)
+            )
+    )
+SELECT (
+        SELECT COUNT(*)
+        FROM filtered_products
+    ) AS total_count, fp.product_id, fp.merchant_id, fp.category_id, fp.weight, fp.rating, fp.slug_product, fp.name, fp.description, fp.price, fp.count_in_stock, fp.brand, fp.image_product, fp.created_at, fp.updated_at, fp.category_name
+FROM filtered_products fp
+ORDER BY fp.created_at DESC
+LIMIT $6
+OFFSET
+    $7
 `
 
 type GetProductsByMerchantParams struct {
@@ -702,18 +742,21 @@ func (q *Queries) GetProductsByMerchant(ctx context.Context, arg GetProductsByMe
 }
 
 const getProductsTrashed = `-- name: GetProductsTrashed :many
-SELECT
-    product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, created_at, updated_at, deleted_at,
-    COUNT(*) OVER() AS total_count
-FROM products
-WHERE deleted_at IS NOT NULL
-AND ($1::TEXT IS NULL 
-       OR p.name ILIKE '%' || $1 || '%'
-       OR p.description ILIKE '%' || $1 || '%'
-       OR p.brand ILIKE '%' || $1 || '%'
-       OR p.slug_product ILIKE '%' || $1 || '%')
+SELECT product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, created_at, updated_at, deleted_at, COUNT(*) OVER () AS total_count
+FROM products as p
+WHERE
+    deleted_at IS NOT NULL
+    AND (
+        $1::TEXT IS NULL
+        OR p.name ILIKE '%' || $1 || '%'
+        OR p.description ILIKE '%' || $1 || '%'
+        OR p.brand ILIKE '%' || $1 || '%'
+        OR p.slug_product ILIKE '%' || $1 || '%'
+    )
 ORDER BY created_at DESC
-LIMIT $2 OFFSET $3
+LIMIT $2
+OFFSET
+    $3
 `
 
 type GetProductsTrashedParams struct {
@@ -829,7 +872,8 @@ SET
 WHERE
     product_id = $1
     AND deleted_at IS NOT NULL
-RETURNING product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, created_at, updated_at, deleted_at
+RETURNING
+    product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, created_at, updated_at, deleted_at
 `
 
 // RestoreProduct: Recovers a soft-deleted product
@@ -876,7 +920,8 @@ SET
 WHERE
     product_id = $1
     AND deleted_at IS NULL
-RETURNING product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, created_at, updated_at, deleted_at
+RETURNING
+    product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, created_at, updated_at, deleted_at
 `
 
 // TrashProduct: Soft-deletes a product
@@ -918,7 +963,8 @@ func (q *Queries) TrashProduct(ctx context.Context, productID int32) (*Product, 
 
 const updateProduct = `-- name: UpdateProduct :one
 UPDATE products
-SET category_id = $2,
+SET
+    category_id = $2,
     name = $3,
     description = $4,
     price = $5,
@@ -929,9 +975,11 @@ SET category_id = $2,
     slug_product = $10,
     image_product = $11,
     updated_at = CURRENT_TIMESTAMP
-WHERE product_id = $1
-  AND deleted_at IS NULL
-RETURNING product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, created_at, updated_at, deleted_at
+WHERE
+    product_id = $1
+    AND deleted_at IS NULL
+RETURNING
+    product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, created_at, updated_at, deleted_at
 `
 
 type UpdateProductParams struct {
@@ -1000,10 +1048,13 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (*
 
 const updateProductCountStock = `-- name: UpdateProductCountStock :one
 UPDATE products
-SET count_in_stock = $2
-WHERE product_id = $1
+SET
+    count_in_stock = $2
+WHERE
+    product_id = $1
     AND deleted_at IS NULL
-RETURNING product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, created_at, updated_at, deleted_at
+RETURNING
+    product_id, merchant_id, category_id, name, description, price, count_in_stock, brand, weight, rating, slug_product, image_product, created_at, updated_at, deleted_at
 `
 
 type UpdateProductCountStockParams struct {
