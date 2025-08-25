@@ -18,9 +18,17 @@ import (
 	"go.uber.org/zap"
 )
 
+func getAllowedList(allowed map[string]bool) string {
+	var list []string
+	for ext := range allowed {
+		list = append(list, strings.ToUpper(ext[1:]))
+	}
+	return strings.Join(list, ", ")
+}
+
 type ImageUploads interface {
 	EnsureUploadDirectory(uploadDir string) error
-	ProcessImageUpload(c echo.Context, uploadDir string, file *multipart.FileHeader) (string, error)
+	ProcessImageUpload(c echo.Context, uploadDir string, file *multipart.FileHeader, isDocument bool) (string, error)
 	CleanupImageOnFailure(imagePath string)
 	SaveUploadedFile(file *multipart.FileHeader, dst string) error
 }
@@ -46,26 +54,40 @@ func (h *ImageUpload) EnsureUploadDirectory(uploadDir string) error {
 	return nil
 }
 
-func (h *ImageUpload) ProcessImageUpload(c echo.Context, uploadDir string, file *multipart.FileHeader) (string, error) {
-	allowedTypes := map[string]bool{
-		".jpg":  true,
-		".jpeg": true,
-		".png":  true,
+func (h *ImageUpload) ProcessImageUpload(c echo.Context, uploadDir string, file *multipart.FileHeader, isDocument bool) (string, error) {
+	var allowedTypes map[string]bool
+	var maxSize int64
+
+	if isDocument {
+		allowedTypes = map[string]bool{
+			".pdf":  true,
+			".docx": true,
+		}
+		maxSize = 10 << 20
+	} else {
+		allowedTypes = map[string]bool{
+			".jpg":  true,
+			".jpeg": true,
+			".png":  true,
+		}
+		maxSize = 5 << 20
 	}
 
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 	if !allowedTypes[ext] {
+		allowedList := getAllowedList(allowedTypes)
 		return "", c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_image_type",
-			Message: "Only JPG, JPEG, and PNG",
+			Status:  "invalid_file_type",
+			Message: fmt.Sprintf("Only %s are allowed", allowedList),
 			Code:    http.StatusBadRequest,
 		})
 	}
 
-	if file.Size > 5<<20 {
+	if file.Size > maxSize {
+		sizeMB := float64(maxSize) / (1 << 20)
 		return "", c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			Status:  "invalid_image_size",
-			Message: "Image size must be less than 5MB",
+			Status:  "invalid_file_size",
+			Message: fmt.Sprintf("File size must be less than %.0fMB", sizeMB),
 			Code:    http.StatusBadRequest,
 		})
 	}
@@ -78,17 +100,18 @@ func (h *ImageUpload) ProcessImageUpload(c echo.Context, uploadDir string, file 
 		})
 	}
 
+	// Gunakan ekstensi yang valid
 	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
 	imagePath := filepath.Join(uploadDir, filename)
 
 	if err := h.SaveUploadedFile(file, imagePath); err != nil {
-		h.logger.Error("Failed to save image",
+		h.logger.Error("Failed to save uploaded file",
 			zap.String("path", imagePath),
 			zap.Error(err),
 		)
 		return "", c.JSON(http.StatusInternalServerError, response.ErrorResponse{
 			Status:  "upload_failed",
-			Message: "Failed to save uploaded image",
+			Message: "Failed to save uploaded file",
 			Code:    http.StatusInternalServerError,
 		})
 	}
@@ -96,6 +119,7 @@ func (h *ImageUpload) ProcessImageUpload(c echo.Context, uploadDir string, file 
 	h.logger.Debug("Successfully saved uploaded file",
 		zap.String("path", imagePath),
 		zap.Int64("size", file.Size),
+		zap.Bool("is_document", isDocument),
 	)
 
 	return imagePath, nil
