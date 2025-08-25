@@ -132,6 +132,7 @@ type MerchantSocialMediaLink struct {
 	Url              string       `json:"url"`
 	CreatedAt        sql.NullTime `json:"created_at"`
 	UpdatedAt        sql.NullTime `json:"updated_at"`
+	DeletedAt        sql.NullTime `json:"deleted_at"`
 }
 
 type Order struct {

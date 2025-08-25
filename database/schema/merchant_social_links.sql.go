@@ -17,7 +17,7 @@ INSERT INTO merchant_social_media_links (
 ) VALUES (
     $1, $2, $3
 )
-RETURNING merchant_social_id, merchant_detail_id, platform, url, created_at, updated_at
+RETURNING merchant_social_id, merchant_detail_id, platform, url, created_at, updated_at, deleted_at
 `
 
 type CreateMerchantSocialMediaLinkParams struct {
@@ -47,6 +47,7 @@ func (q *Queries) CreateMerchantSocialMediaLink(ctx context.Context, arg CreateM
 		&i.Url,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return &i, err
 }
@@ -101,7 +102,7 @@ UPDATE merchant_social_media_links
 SET deleted_at = NULL
 WHERE merchant_social_id = $1
   AND deleted_at IS NOT NULL
-RETURNING merchant_social_id, merchant_detail_id, platform, url, created_at, updated_at
+RETURNING merchant_social_id, merchant_detail_id, platform, url, created_at, updated_at, deleted_at
 `
 
 // RestoreMerchantSocialMediaLink: Restores a soft-deleted social media link
@@ -124,6 +125,7 @@ func (q *Queries) RestoreMerchantSocialMediaLink(ctx context.Context, merchantSo
 		&i.Url,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return &i, err
 }
@@ -133,7 +135,7 @@ UPDATE merchant_social_media_links
 SET deleted_at = CURRENT_TIMESTAMP
 WHERE merchant_social_id = $1
   AND deleted_at IS NULL
-RETURNING merchant_social_id, merchant_detail_id, platform, url, created_at, updated_at
+RETURNING merchant_social_id, merchant_detail_id, platform, url, created_at, updated_at, deleted_at
 `
 
 // TrashMerchantSocialMediaLink: Soft-deletes a merchant social media link
@@ -156,6 +158,7 @@ func (q *Queries) TrashMerchantSocialMediaLink(ctx context.Context, merchantSoci
 		&i.Url,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return &i, err
 }
@@ -168,7 +171,7 @@ SET
     updated_at = CURRENT_TIMESTAMP
 WHERE
     merchant_social_id = $1
-RETURNING merchant_social_id, merchant_detail_id, platform, url, created_at, updated_at
+RETURNING merchant_social_id, merchant_detail_id, platform, url, created_at, updated_at, deleted_at
 `
 
 type UpdateMerchantSocialMediaLinkParams struct {
@@ -199,6 +202,7 @@ func (q *Queries) UpdateMerchantSocialMediaLink(ctx context.Context, arg UpdateM
 		&i.Url,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return &i, err
 }
